@@ -1,3 +1,6 @@
+#ifndef HW_H
+#define HW_H
+
 //<----- CONFIG FOR BOTH MY LCD AND TOUCH ---->
 
 //###########################//
@@ -47,7 +50,7 @@
 //LED and buttons
 #define PIN_LED             2
 #define PIN_RESET_BUTTON    35
-
+#define PIN_BACK_BUTTON     36
 
 //external handles used by LVGL
 extern esp_lcd_panel_handle_t panel_handle;
@@ -55,8 +58,6 @@ extern esp_lcd_touch_handle_t touch_handle;
 
 
 //to call once to initiliaze both LCD and touch
-void init_screen();
+void init_hardware();
 
-//useless
-/* void test_draw_frame();
-void test_touch_detect(); */
+#endif
