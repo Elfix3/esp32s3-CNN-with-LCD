@@ -3,12 +3,9 @@
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
-#include "cnn_model.h"
 
 
-
-#define NUM_CLASSES 10
-const char* categories[NUM_CLASSES] = {
+/* const char* categories[NUM_CLASSES] = {
     "bread",
     "candle",
     "cat",
@@ -19,7 +16,68 @@ const char* categories[NUM_CLASSES] = {
     "spider",
     "umbrella",
     "wine glass"
+}; */
+
+
+/* const char* categories_30[30] = {
+    "bee",
+    "blueberry",
+    "brain",
+    "bread",
+    "butterfly",
+    "cactus",
+    "cake",
+    "candle",
+    "carrot",
+    "cat",
+    "frying_pan",
+    "hourglass",
+    "ice_cream",
+    "leaf",
+    "lobster",
+    "lollipop",
+    "monkey",
+    "mushroom",
+    "octopus",
+    "pineapple",
+    "pizza",
+    "potato",
+    "rabbit",
+    "shovel",
+    "snowman",
+    "spider",
+    "sword",
+    "umbrella",
+    "violin",
+    "wine_glass"
 };
+ */
+const char* categories_20[NUM_CLASSES] = {
+    "bee",
+    "blueberry",
+    "bread",
+    "butterfly",
+    "cake",
+    "candle",
+    "carrot",
+    "cat",
+    "hourglass",
+    "ice cream",
+    "leaf",
+    "lobster",
+    "lollipop",
+    "monkey",
+    "mushroom",
+    "pineapple",
+    "potato",
+    "spider",
+    "umbrella",
+    "wine glass"
+};
+
+
+
+
 
 
 // Globals, used for compatibility with Arduino-style sketches.
@@ -106,10 +164,11 @@ void convertImageForCnn(uint8_t *resized_28_28, uint32_t n_pixels, int8_t *desti
 }
 
 
-
+volatile static int64_t start_time;
 
 void infere(const int8_t*image){  //pass parameter here
 
+    start_time = esp_timer_get_time();
     //input->data.int8;
     memcpy(input->data.int8, image, 28*28*sizeof(int8_t));
     if (kTfLiteOk != interpreter->Invoke()) {
@@ -117,58 +176,49 @@ void infere(const int8_t*image){  //pass parameter here
     }
 
     output = interpreter->output(0);
-    int8_t* out = output->data.int8;  // cast properly
 
+    int8_t* out = output->data.int8;  // cast properly
+    
     //Qz parameters
     float scale = output->params.scale;
     int zero_point = output->params.zero_point;
-
+    
     // Compute softmax probabilities
     float dequantized[NUM_CLASSES];
     float exp_sum = 0.0f;
-
+    
     int predicted_class = -1;
     float max_score = -std::numeric_limits<float>::max();
-
+    
     for (int i = 0; i < NUM_CLASSES; i++) {
         dequantized[i] = scale * (out[i] - zero_point);  // dequantize
         dequantized[i] = expf(dequantized[i]);           // exponentiate
         exp_sum += dequantized[i];
-
-
+        
+        
         if (dequantized[i] > max_score) {
             max_score = dequantized[i];
             predicted_class = i;
+        }
     }
-    }
-
-    //MicroPrintf("\nPredictions :");
-    // Normalize to get probabilities
-
-
+    volatile int64_t finish_time = esp_timer_get_time();
+    const char* guess = categories_20[predicted_class];
+    
+    MicroPrintf("Micro printf : Inference time : %lli ms, guessed : %s", (finish_time - start_time + 500)/1000 ,guess);
+    //printf("Printf : Inference time : %lli ms, guessed : %s\n", (finish_time - start_time) ,guess);
     event_t inf_event;
     inf_event.type = INFERENCE_EVENT;
-
+    
     // Accédez directement au champ de l'union sans nom
-    strncpy(inf_event.inference.className, categories[predicted_class], sizeof(inf_event.inference.className) - 1);
+    strncpy(inf_event.inference.className, guess, sizeof(inf_event.inference.className) - 1);
     inf_event.inference.className[sizeof(inf_event.inference.className) - 1] = '\0';
     inf_event.inference.probability = (float)(max_score / exp_sum);
-
-
-    event_t t = {.type = RESET_EVENT};
-
-    printf("\nYes\n");
+    
+    
+    //event_t t = {.type = CANCEL_EVENT};
     if(xQueueSend(eventQueue, &inf_event,20) != pdPASS){
         printf("Error of queue send\n");
     }
-    
-    /* for (int i = 0; i < NUM_CLASSES; i++) {
-        float prob = dequantized[i] / exp_sum;
-        r.classes[i] = categories[i];
-        r.probs[i] = prob;
-
-        MicroPrintf("%s : %.3f", categories[i], prob);  // print probability
-    } */
     inference_count++;
 }
 

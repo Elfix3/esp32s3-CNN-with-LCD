@@ -5,10 +5,15 @@
 #include <stdint.h>
 #include "events.h"
 #include "lvgl_setup.h"         //only to get canvas buffer in the infere task
+#include "cnn_model.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+    
+
+#define NUM_CLASSES 20
+
 
 
 void INIT_MODEL();

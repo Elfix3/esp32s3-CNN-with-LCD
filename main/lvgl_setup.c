@@ -135,7 +135,6 @@ static void touch_read_cb(lv_indev_t * indev, lv_indev_data_t * data){
         }
         last_x = x;
         last_y = y;
-            
     } else {
         last_x = -1;
         last_y = -1;
@@ -206,7 +205,7 @@ static void lvgl_create_UI(){
     lv_obj_set_style_text_font(ui.label_guess_result, &lv_font_montserrat_12, LV_PART_MAIN); //size here
     lv_obj_set_style_text_color(ui.label_guess_result, lv_color_hex(0xFFFFFF), LV_PART_MAIN); // color here
     lv_label_set_text(ui.label_guess_result, "Bread 91 %");
-    lv_obj_set_pos(ui.label_guess_result,130,275);
+    lv_obj_set_pos(ui.label_guess_result,120,275);
 }
 //
 
@@ -256,7 +255,7 @@ bool get_resized_image_canvas(uint8_t* dst_28_28_buff) {
 void manage_events(void* TaskParameters_t){
     static event_t event;
     while(1) {
-        if(xQueueReceive(eventQueue, &event,10) == pdPASS){
+        if(xQueueReceive(eventQueue, &event,pdMS_TO_TICKS(10)) == pdPASS){
             switch(event.type){
                 case RESET_EVENT :
                     lv_canvas_clear();      //do work here no ?
@@ -268,7 +267,7 @@ void manage_events(void* TaskParameters_t){
                 break;
                 case INFERENCE_EVENT :
                     //printf("I recieve\n");
-                    printf("%s %.1f%%",event.inference.className,event.inference.probability*100);
+                    //printf("%s %.1f%%",event.inference.className,event.inference.probability*100);
 
                     char buffer[100];
                     snprintf(buffer, sizeof(buffer), "%s %.1f%%", event.inference.className, event.inference.probability * 100);

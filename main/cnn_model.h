@@ -2,11 +2,10 @@
 #define CNN_MODEL_H
 
 
-#include <cstddef>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 
 extern const unsigned char model_parameters[];
